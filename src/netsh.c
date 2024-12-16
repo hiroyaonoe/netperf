@@ -422,6 +422,11 @@ parse_address_family(char family_string[])
     return(AF_RDS);
   }
 #endif
+#if defined(AF_UNIX)
+  if (strstr(temp,"af_unix")) {
+    return(AF_UNIX);
+  }
+#endif
   if (strstr(temp,"unspec") ||
       strstr(temp,"0")) {
     return(AF_UNSPEC);
