@@ -430,16 +430,13 @@ create_listens(char hostname[], char port[], int af) {
   }
 #ifdef WANT_UNIX
   if (af == AF_UNIX) {
-    memset(&local_res,0,sizeof(local_res));
+    memset(local_res,0,sizeof(struct addrinfo));
     local_res->ai_family = af;
-    local_res->ai_socktype = SOCK_STREAM;
-    local_res->ai_protocol = 0;
-    local_res->ai_flags = AI_PASSIVE;
-    memset(&local_res_addr,0,sizeof(local_res_addr));
+    local_res->ai_addrlen = sizeof(struct sockaddr_un);
+    local_res->ai_addr = malloc(local_res->ai_addrlen);
+    local_res_addr = (struct sockaddr_un *) local_res->ai_addr;
     local_res_addr->sun_family = af;
     strncpy(local_res_addr->sun_path, hostname, sizeof(local_res_addr->sun_path));
-    local_res->ai_addr = (struct sockaddr *)local_res_addr;
-    local_res->ai_addrlen = sizeof(local_res_addr);
   } else {
 #endif /* WANT_UNIX */
     memset(&hints,0,sizeof(hints));
