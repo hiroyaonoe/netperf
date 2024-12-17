@@ -3177,6 +3177,13 @@ dump_addrinfo(FILE *dumploc, struct addrinfo *info,
 		(u_char)ai_addr->sa_data[i]);
       }
       fprintf(dumploc,"\n");
+      fprintf(dumploc,
+              "\tsa_family: %s sadata_str:",
+              inet_ftos(ai_addr->sa_family));
+	fprintf(dumploc,
+		" %s",
+		ai_addr->sa_data);
+      fprintf(dumploc,"\n");
     }
     temp = temp->ai_next;
   }
@@ -3205,7 +3212,7 @@ resolve_host(char *hostname,
 
 #ifdef WANT_UNIX
   if (family == AF_UNIX) {
-    memset(ai,0,sizeof(struct addrinfo));
+    ai = calloc(1,sizeof(struct addrinfo));
     ai->ai_family = family;
     ai->ai_addrlen = sizeof(struct sockaddr_un);
     ai->ai_addr = malloc(ai->ai_addrlen);

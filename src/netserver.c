@@ -430,7 +430,7 @@ create_listens(char hostname[], char port[], int af) {
   }
 #ifdef WANT_UNIX
   if (af == AF_UNIX) {
-    memset(local_res,0,sizeof(struct addrinfo));
+    local_res = calloc(1,sizeof(struct addrinfo));
     local_res->ai_family = af;
     local_res->ai_addrlen = sizeof(struct sockaddr_un);
     local_res->ai_addr = malloc(local_res->ai_addrlen);
