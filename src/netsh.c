@@ -1129,7 +1129,7 @@ scan_cmd_line(int argc, char *argv[])
       exit(-1);
     }
     address_family = ai->ai_family;
-    // freeaddrinfo(ai);
+    freeaddrinfo(ai);
   }
 
 
