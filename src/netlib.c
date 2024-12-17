@@ -118,6 +118,7 @@ char    netlib_id[]="\
 #include <sys/time.h>
 #endif /* MPE */
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -3189,6 +3190,7 @@ resolve_host(char *hostname,
 {
   struct addrinfo   hints;
   struct addrinfo  *ai;
+  struct sockaddr_un *ai_addr;
   int count;
   int error;
 
@@ -3201,38 +3203,52 @@ resolve_host(char *hostname,
     fflush(where);
   }
 
-  memset(&hints, 0, sizeof(hints));
-  hints.ai_family = family;
-  hints.ai_socktype = SOCK_STREAM;
-  hints.ai_protocol = IPPROTO_TCP;
-  hints.ai_flags = AI_CANONNAME | AI_ADDRCONFIG;
-  count = 0;
-  do {
-    error = getaddrinfo((char *)hostname,
-                        (char *)port,
-                        &hints,
-                        &ai);
-    count += 1;
-    if (error == EAI_AGAIN) {
-      if (debug) {
-        fprintf(where,"Sleeping on getaddrinfo EAI_AGAIN\n");
-        fflush(where);
+#ifdef WANT_UNIX
+  if (family == AF_UNIX) {
+    memset(ai,0,sizeof(struct addrinfo));
+    ai->ai_family = family;
+    ai->ai_addrlen = sizeof(struct sockaddr_un);
+    ai->ai_addr = malloc(ai->ai_addrlen);
+    ai_addr = (struct sockaddr_un *) ai->ai_addr;
+    ai_addr->sun_family = family;
+    strncpy(ai_addr->sun_path, hostname, sizeof(ai_addr->sun_path));
+  } else {
+#endif /* WANT_UNIX */
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = family;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_flags = AI_CANONNAME | AI_ADDRCONFIG;
+    count = 0;
+    do {
+      error = getaddrinfo((char *)hostname,
+                          (char *)port,
+                          &hints,
+                          &ai);
+      count += 1;
+      if (error == EAI_AGAIN) {
+        if (debug) {
+          fprintf(where,"Sleeping on getaddrinfo EAI_AGAIN\n");
+          fflush(where);
+        }
+        sleep(1);
       }
-      sleep(1);
-    }
-  } while ((error == EAI_AGAIN) && (count <= 5));
+    } while ((error == EAI_AGAIN) && (count <= 5));
 
-  if (error) {
-    printf("%s: could not resolve host '%s' port '%s' af %s"
-	   "\n\tgetaddrinfo returned %d %s\n",
-	   __FUNCTION__,
-           hostname,
-           port,
-           inet_ftos(family),
-           error,
-           gai_strerror(error));
-    return(NULL);
+    if (error) {
+      printf("%s: could not resolve host '%s' port '%s' af %s"
+      "\n\tgetaddrinfo returned %d %s\n",
+      __FUNCTION__,
+            hostname,
+            port,
+            inet_ftos(family),
+            error,
+            gai_strerror(error));
+      return(NULL);
+    }
+#ifdef WANT_UNIX
   }
+#endif /* WANT_UNIX */
 
   if (debug) {
     dump_addrinfo(where, ai, hostname, port, family);
